@@ -1,0 +1,55 @@
+# RTD.MUAR — один запуск: docker compose up -d
+# Требуется: Docker + Compose v2 на домашнем сервере (91.203.188.118)
+services:
+  backend:
+    build: ./backend
+    container_name: rtd-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://rtd:rtd@postgres:5432/rtd
+      REDIS_URL: redis://redis:6379/0
+      BASE_URL: https://rtd.heartwins.ru
+      OLLAMA_URL: http://host.docker.internal:11434   # или ollama-контейнер ниже
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ./data:/srv/data:ro
+      - ./backend/rtd.db:/srv/rtd.db
+    depends_on: [postgres, redis]
+    networks: [rtd]
+
+  frontend:
+    image: nginx:alpine
+    container_name: rtd-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./deploy/nginx-site.conf:/etc/nginx/conf.d/default.conf:ro
+    ports: ["80:80", "443:443"]
+    depends_on: [backend]
+    networks: [rtd]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: rtd-postgres
+    restart: unless-stopped
+    environment: { POSTGRES_USER: rtd, POSTGRES_PASSWORD: rtd, POSTGRES_DB: rtd }
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    networks: [rtd]
+
+  redis:
+    image: redis:7-alpine
+    container_name: rtd-redis
+    restart: unless-stopped
+    networks: [rtd]
+
+  # Опционально: Llama локально в контейнере (нужен GPU: --gpus all)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: rtd-ollama
+  #   restart: unless-stopped
+  #   volumes: ["ollama:/root/.ollama"]
+  #   networks: [rtd]
+
+volumes: { pgdata: {}, ollama: {} }
+networks: { rtd: {} }
