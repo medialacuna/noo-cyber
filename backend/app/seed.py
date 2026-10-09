@@ -19,7 +19,7 @@ from app.models.db import Section, User, UserRole
 log = logging.getLogger("rtd.seed")
 settings = get_settings()
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(Path(__file__).resolve().parents[2] / "data")))
 
 SEED_FILES: list[tuple[Section, str]] = [
     (Section.lestnica, "lestnica.md"),

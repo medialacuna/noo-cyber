@@ -20,7 +20,7 @@ from app.models.db import AIMemory, Play, Section, User, UserRole, utcnow
 
 log = logging.getLogger("rtd.komarovo")
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "komarovo"
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(Path(__file__).resolve().parents[2] / "data"))) / "komarovo"
 AUTHOR = "Резиденция Комарово · art science"
 
 # файл -> (заголовок пьесы, раздел знания)
